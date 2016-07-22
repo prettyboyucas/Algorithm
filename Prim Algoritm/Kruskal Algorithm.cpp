@@ -44,27 +44,59 @@ struct Edge {
 struct Graph {
 	vector<char> vertices;
 	vector<Edge> edges;
+	vector<pair<char, Edge>> adjacent(char u) {
+		vector<pair<char, Edge>> res;
+		for(Edge e:edges){
+			if(e.vertex1 == u){
+				res.push_back(make_pair(e.vertex2, e));
+			}
+			else if(e.vertex2 == u){
+				res.push_back(make_pair(e.vertex1, e));
+			}
+		}
+		return res;
+	}
 };
 
 
-void Kruskal(Graph& g) {
-	vector<Edge> A;
-	for (auto c : g.vertices)
-		MakeSet(c);
-	sort(g.edges.begin(), g.edges.end(), [](Edge x, Edge y) {
-		return x.weight < y.weight;
-	});
-	for (Edge e : g.edges) {
-		char root1 = Find(e.vertex1);
-		char root2 = Find(e.vertex2);
-		if (root1 != root2) {
-			A.push_back(e);
-			Union(root1, root2);
-		}
+void Prim(Graph& g) {
+	unordered_map<char,char> A;
+	unordered_map<char, char> PARENT;
+	unordered_map<char, int> KEY;
+
+	for(auto c:g.vertices){
+		PARENT[c] = '\0';
+		KEY[c] = INT_MAX;
 	}
-	for (auto& ele : A) {
-		cout << ele.vertex1 << " " << ele.vertex2 << " " << ele.weight << endl;
-	}
+	 KEY['a'] = 0; //root
+	 vector<char> Q = g.vertices;
+
+	 while(!Q.empty()){    //O(V)
+		 char u = *std::min_element(Q.begin(), Q.end(),
+		 [&](char x,char y){
+			 return KEY[x]<KEY[y];
+		 });
+		 vector<char>::iterator itr = remove(Q.begin(),Q.end(), u);
+		 Q.erase(itr, Q.end());//erase() following remove
+
+		 if(PARENT[u] != '\0'){
+			 A[u] = PARENT[u];
+		 }
+		 std::vector<pair<char, Edge>> adj=g.adjacent(u);//O(E)
+		 for(pair<char,Edge> v:adj){
+			 if(find(Q.begin(), Q.end(), v.first) != Q.end()) {
+				 if(v.second.weight <KEY[v.first]) {
+					 PARENT[v.first] = u;
+					 KEY[v.first] =v.second.weight;
+				 }
+			 }
+		 }
+
+	 }
+
+	 for(auto e:A) {
+		 cout<<e.first<<"--"<<e.second<<endl;
+	 }
 }
 
 int main(){
@@ -81,7 +113,7 @@ int main(){
 	g.edges.push_back(Edge('d', 'e', 2));
 	g.edges.push_back(Edge('d', 'c', 3));
 
-	Kruskal(g);
+	Prim(g);
 
 	getchar();
 	return 0;
